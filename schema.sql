@@ -10,5 +10,9 @@ CREATE TABLE IF NOT EXISTS appointments (
   doctor TEXT,
   type TEXT,
   reason TEXT,
-  insurance TEXT
+  insurance TEXT,
+  status TEXT DEFAULT 'pending'
 );
+
+-- Migration: add status to existing tables
+-- ALTER TABLE appointments ADD COLUMN status TEXT DEFAULT 'pending';

@@ -1,23 +1,5 @@
 // Cloudflare Pages Function for appointments backed by D1
 // Route: /appointments
-// Bind a D1 database named DB in your Cloudflare Pages project settings.
-
-/**
- * Schema suggestion (run once in D1):
- *
- * CREATE TABLE IF NOT EXISTS appointments (
- *   id INTEGER PRIMARY KEY AUTOINCREMENT,
- *   created_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
- *   name TEXT NOT NULL,
- *   phone TEXT,
- *   date TEXT,
- *   time TEXT,
- *   doctor TEXT,
- *   type TEXT,
- *   reason TEXT,
- *   insurance TEXT
- * );
- */
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -28,18 +10,12 @@ const CORS_HEADERS = {
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      ...CORS_HEADERS,
-    },
+    headers: { 'Content-Type': 'application/json; charset=utf-8', ...CORS_HEADERS },
   });
 }
 
 function textResponse(message, status = 200) {
-  return new Response(message, {
-    status,
-    headers: CORS_HEADERS,
-  });
+  return new Response(message, { status, headers: CORS_HEADERS });
 }
 
 function sanitizeField(value, maxLength) {
@@ -47,10 +23,7 @@ function sanitizeField(value, maxLength) {
 }
 
 export async function onRequestOptions() {
-  return new Response(null, {
-    status: 204,
-    headers: CORS_HEADERS,
-  });
+  return new Response(null, { status: 204, headers: CORS_HEADERS });
 }
 
 export async function onRequestGet(context) {
@@ -58,12 +31,12 @@ export async function onRequestGet(context) {
   try {
     const { results } = await db
       .prepare(
-        `SELECT id, created_at, name, phone, date, time, doctor, type, reason, insurance
+        `SELECT id, created_at, name, phone, date, time, doctor, type, reason, insurance,
+                COALESCE(status, 'pending') AS status
          FROM appointments
          ORDER BY date ASC, time ASC, created_at ASC`
       )
       .all();
-
     return jsonResponse(results || []);
   } catch (err) {
     console.error('D1 GET /appointments failed', err);
@@ -80,14 +53,16 @@ export async function onRequestPost(context) {
     return textResponse('Invalid JSON body', 400);
   }
 
-  const name = sanitizeField(payload.name, 100);
-  const phone = sanitizeField(payload.phone, 20);
-  const date = sanitizeField(payload.date, 20);
-  const time = sanitizeField(payload.time, 20);
-  const doctor = sanitizeField(payload.doctor, 150);
-  const type = sanitizeField(payload.type, 100);
-  const reason = sanitizeField(payload.reason, 500);
+  const name      = sanitizeField(payload.name, 100);
+  const phone     = sanitizeField(payload.phone, 20);
+  const date      = sanitizeField(payload.date, 20);
+  const time      = sanitizeField(payload.time, 20);
+  const doctor    = sanitizeField(payload.doctor, 150);
+  const type      = sanitizeField(payload.type, 100);
+  const reason    = sanitizeField(payload.reason, 500);
   const insurance = sanitizeField(payload.insurance, 100);
+  const status    = ['pending', 'confirmed', 'cancelled'].includes(payload.status)
+    ? payload.status : 'pending';
 
   if (!name || !date || !time) {
     return textResponse('name, date and time are required', 400);
@@ -96,27 +71,23 @@ export async function onRequestPost(context) {
   try {
     const info = await db
       .prepare(
-        `INSERT INTO appointments (name, phone, date, time, doctor, type, reason, insurance)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO appointments (name, phone, date, time, doctor, type, reason, insurance, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
-      .bind(name, phone, date, time, doctor, type, reason, insurance)
+      .bind(name, phone, date, time, doctor, type, reason, insurance, status)
       .run();
 
     const insertedId = info.meta.last_row_id;
-
     const { results } = await db
       .prepare(
-        `SELECT id, created_at, name, phone, date, time, doctor, type, reason, insurance
-         FROM appointments
-         WHERE id = ?`
+        `SELECT id, created_at, name, phone, date, time, doctor, type, reason, insurance,
+                COALESCE(status, 'pending') AS status
+         FROM appointments WHERE id = ?`
       )
       .bind(insertedId)
       .all();
 
-    const created = results && results[0]
-      ? results[0]
-      : { id: insertedId, name, phone, date, time, doctor, type, reason, insurance };
-
+    const created = results?.[0] ?? { id: insertedId, name, phone, date, time, doctor, type, reason, insurance, status };
     return jsonResponse(created, 201);
   } catch (err) {
     console.error('D1 POST /appointments failed', err);
@@ -126,8 +97,7 @@ export async function onRequestPost(context) {
 
 export async function onRequestDelete(context) {
   const db = context.env.DB;
-  const url = new URL(context.request.url);
-  const id = Number(url.searchParams.get('id'));
+  const id = Number(new URL(context.request.url).searchParams.get('id'));
 
   if (!Number.isInteger(id) || id <= 0) {
     return textResponse('Valid id is required', 400);
@@ -139,10 +109,7 @@ export async function onRequestDelete(context) {
       .bind(id)
       .run();
 
-    if (!result.meta?.changes) {
-      return textResponse('Appointment not found', 404);
-    }
-
+    if (!result.meta?.changes) return textResponse('Appointment not found', 404);
     return jsonResponse({ success: true, id });
   } catch (err) {
     console.error('D1 DELETE /appointments failed', err);
