@@ -155,11 +155,12 @@ a:hover{text-decoration:underline;}
 /* ───────────────────────────────────────────────── */
 /* ── BOOKING WIDGET ──────────────────────────────── */
 /* ───────────────────────────────────────────────── */
-.booking-widget{padding:0;overflow:hidden;}
+.booking-widget{padding:0;overflow:visible;}
 
 .bw-header{
   display:flex;align-items:center;gap:12px;
   padding:18px 20px;border-bottom:1px solid var(--line);
+  border-radius:var(--r-lg) var(--r-lg) 0 0;
   background:linear-gradient(135deg,var(--accent-soft) 0%,rgba(255,255,255,0) 100%);
 }
 .bw-icon{font-size:2rem;line-height:1;}
@@ -175,9 +176,7 @@ a:hover{text-decoration:underline;}
   display:flex;align-items:center;
   padding:14px 20px;border-bottom:1px solid var(--line);gap:0;
 }
-.step-node{
-  display:flex;align-items:center;gap:7px;flex-shrink:0;
-}
+.step-node{display:flex;align-items:center;gap:7px;flex-shrink:0;}
 .step-node span{
   width:26px;height:26px;border-radius:50%;
   background:rgba(15,23,42,.08);color:var(--muted);
@@ -189,7 +188,7 @@ a:hover{text-decoration:underline;}
 .step-node.active p{color:var(--accent);}
 .step-connector{flex:1;height:2px;background:rgba(15,23,42,.08);margin:0 8px;}
 
-/* Form */
+/* Form sections */
 .bw-form{display:grid;gap:0;}
 .bw-section{padding:16px 20px;border-bottom:1px solid var(--line);display:grid;gap:10px;}
 .bw-section:last-child{border-bottom:0;}
@@ -206,59 +205,90 @@ input,select,textarea{
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);}
 textarea{min-height:68px;resize:vertical;}
 
-/* ── Month Picker */
+/* ────────────────────────────────────────────────
+   Month Picker  — KEY FIX: no overflow:hidden,
+   explicit cell height so days are always visible
+──────────────────────────────────────────────── */
 .month-picker{
-  background:rgba(255,255,255,.7);border:1px solid var(--line);
-  border-radius:var(--r-md);overflow:hidden;
+  background:#fff;
+  border:1.5px solid var(--line);
+  border-radius:var(--r-md);
+  /* NO overflow:hidden — that was clipping the grid */
 }
 .mpk-header{
-  display:flex;align-items:center;padding:10px 12px;
-  background:var(--accent-soft);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;padding:10px 14px;
+  background:var(--accent-soft);
+  border-bottom:1px solid var(--line);
+  border-radius:var(--r-md) var(--r-md) 0 0;
 }
-.mpk-title{flex:1;text-align:center;font-size:.87rem;font-weight:700;color:var(--accent);}
+.mpk-title{flex:1;text-align:center;font-size:.9rem;font-weight:700;color:var(--accent);}
 .mpk-nav{
-  width:30px;height:30px;border-radius:50%;border:0;
+  width:32px;height:32px;border-radius:50%;border:0;
   background:rgba(15,118,110,.15);color:var(--accent);
-  font-size:1.1rem;cursor:pointer;display:grid;place-items:center;transition:.15s;
-  flex-shrink:0;
+  font-size:1.2rem;cursor:pointer;display:grid;place-items:center;transition:.15s;
+  flex-shrink:0;line-height:1;
 }
 .mpk-nav:hover{background:var(--accent);color:#fff;}
+
+/* Day-of-week header row */
 .mpk-dow{
-  display:grid;grid-template-columns:repeat(7,1fr);
-  padding:6px 8px 0;
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  padding:8px 10px 2px;
+  border-bottom:1px solid var(--line);
 }
 .mpk-dow span{
-  text-align:center;font-size:.66rem;font-weight:700;
-  color:var(--muted);text-transform:uppercase;padding-bottom:4px;
+  text-align:center;
+  font-size:.68rem;font-weight:700;
+  color:var(--muted);text-transform:uppercase;
+  padding:4px 0;
 }
+
+/* Day grid — fixed height cells so numbers are ALWAYS visible */
 .mpk-grid{
-  display:grid;grid-template-columns:repeat(7,1fr);
-  gap:2px;padding:4px 8px 10px;
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:3px;
+  padding:8px 10px 12px;
 }
 .mpk-day{
   position:relative;
-  aspect-ratio:1;border-radius:50%;border:0;
-  background:transparent;cursor:pointer;
-  font-size:.82rem;font-weight:500;
-  display:grid;place-items:center;
+  height:36px;          /* explicit height instead of aspect-ratio */
+  min-width:0;
+  border-radius:8px;
+  border:0;
+  background:transparent;
+  cursor:pointer;
+  font-size:.85rem;
+  font-weight:500;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   transition:background .12s,color .12s;
   color:var(--text);
+  -webkit-tap-highlight-color:transparent;
 }
 .mpk-day:hover:not(:disabled):not(.selected){
   background:var(--accent-soft);color:var(--accent);
 }
 .mpk-day.selected{
-  background:var(--accent) !important;color:#fff !important;font-weight:700;
+  background:var(--accent) !important;
+  color:#fff !important;
+  font-weight:700;
+  border-radius:8px;
 }
 .mpk-day.past,.mpk-day.sunday{
-  color:rgba(15,23,42,.25);cursor:not-allowed;
+  color:rgba(15,23,42,.28);cursor:not-allowed;
 }
 .mpk-day.has-booking:not(.past):not(.sunday){
   font-weight:700;color:var(--accent);
 }
 .mpk-dot{
-  position:absolute;bottom:3px;left:50%;transform:translateX(-50%);
-  width:4px;height:4px;border-radius:50%;background:var(--accent);
+  position:absolute;bottom:3px;left:50%;
+  transform:translateX(-50%);
+  width:4px;height:4px;border-radius:50%;
+  background:var(--accent);
+  pointer-events:none;
 }
 .mpk-day.selected .mpk-dot{background:#fff;}
 
@@ -292,24 +322,14 @@ textarea{min-height:68px;resize:vertical;}
   color:#fff !important;font-weight:700;
 }
 .slot-pill.booked{
-  background:rgba(15,23,42,.05);
-  border-color:transparent;
-  color:rgba(15,23,42,.3);
-  cursor:not-allowed;
+  background:rgba(15,23,42,.05);border-color:transparent;
+  color:rgba(15,23,42,.3);cursor:not-allowed;
   text-decoration:line-through;
 }
 .slot-pill.past{opacity:.3;cursor:not-allowed;}
-.slot-legend{
-  display:flex;gap:12px;flex-wrap:wrap;
-  margin-top:4px;
-}
-.slot-legend span{
-  display:flex;align-items:center;gap:5px;
-  font-size:.7rem;color:var(--muted);
-}
-.sleg{
-  display:inline-block;width:10px;height:10px;border-radius:3px;
-}
+.slot-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;}
+.slot-legend span{display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--muted);}
+.sleg{display:inline-block;width:10px;height:10px;border-radius:3px;}
 .sleg.available{background:#fff;border:1.5px solid var(--line);}
 .sleg.booked-dot{background:rgba(15,23,42,.1);}
 .sleg.sel-dot{background:var(--accent);}
@@ -320,9 +340,7 @@ textarea{min-height:68px;resize:vertical;}
   border-bottom:1px solid var(--line);
   padding:16px 20px;display:grid;gap:12px;
 }
-.review-slot{
-  display:flex;align-items:center;gap:12px;
-}
+.review-slot{display:flex;align-items:center;gap:12px;}
 .review-slot-icon{font-size:2rem;}
 .review-slot strong{display:block;font-size:.95rem;font-weight:700;}
 .review-slot p{font-size:.8rem;color:var(--muted);margin-top:2px;}
@@ -474,8 +492,10 @@ textarea{min-height:68px;resize:vertical;}
   .review-card{background:rgba(45,212,191,.08);}
   .bottom-nav{background:rgba(15,23,42,.96);border-top-color:var(--line);}
   .bnav-btn.bnav-book{color:#021a18;}
-  .month-picker{background:rgba(15,23,42,.6);border-color:var(--line);}
+  .month-picker{background:rgba(15,23,42,.85);border-color:rgba(148,163,184,.2);}
+  .mpk-header{background:rgba(45,212,191,.12);}
   .mpk-day{color:var(--text);}
+  .mpk-day:hover:not(:disabled):not(.selected){background:rgba(45,212,191,.15);color:var(--accent);}
   .mpk-day.past,.mpk-day.sunday{color:rgba(148,163,184,.3);}
   .slot-pill{background:rgba(15,23,42,.5);border-color:var(--line);color:var(--text);}
   .slot-pill:hover:not(:disabled):not(.booked):not(.selected){background:var(--accent-soft);}
@@ -509,9 +529,10 @@ textarea{min-height:68px;resize:vertical;}
   .hero-copy h2{font-size:1.15rem;}
   .services-section,.contact-section,.admin-section{padding:14px;}
   .form-actions{padding:12px 14px;}
-  .bw-section{padding:14px;}
+  .bw-section{padding:12px;}
   .bw-header{padding:14px;}
   .step-track{padding:10px 14px;}
+  .mpk-day{height:32px;font-size:.8rem;}
 }
 @media print{
   .app-bg,.topbar,.bottom-nav,.toast,.right-col,.hero-images,.stats-row,.week-cal{display:none !important;}
