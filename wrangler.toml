@@ -3,6 +3,6 @@ pages_build_output_dir = "dist"
 compatibility_date = "2024-09-23"
 
 [[d1_databases]]
-binding     = "DB"
+binding       = "DB"
 database_name = "albacete-clinic-db"
-database_id   = "YOUR_D1_DATABASE_ID_HERE"
+database_id   = "a24ab207-9cca-46be-921a-e955b7b56899"
